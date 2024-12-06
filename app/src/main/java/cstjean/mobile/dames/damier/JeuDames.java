@@ -4,6 +4,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Classe représentant le jeu de dames.
@@ -19,7 +20,7 @@ public class JeuDames {
     /**
      * Liste enregistrant l'historique des déplacements effectués dans la partie.
      */
-    private final List<String> historiqueDeDeplacements;
+    private Stack<int[]> historiqueActions = new Stack<>();
 
     /**
      * Indicateur de tour du joueur : 0 pour le joueur 1, 1 pour le joueur 2.
@@ -34,7 +35,7 @@ public class JeuDames {
         damier = new Damier();
         damier.initializer();
         tour = 0;
-        historiqueDeDeplacements = new ArrayList<>();
+       historiqueActions = new Stack<>();
     }
 
     /**
@@ -46,21 +47,27 @@ public class JeuDames {
      */
     public int getPositionIntermediaire(int positionActuelle, int delta) {
         int positionIntermediaire = 0;
+        int colonneActuelle = positionActuelle % 10;  // Extrait la colonne (sur un plateau de 10 cases par ligne)
+
         if (delta == 9) {
-            positionIntermediaire = (positionActuelle % 10 >= 1 && positionActuelle % 10 <= 5) ? positionActuelle + 5
+            positionIntermediaire = (colonneActuelle >= 1 && colonneActuelle <= 5) ? positionActuelle + 5
                     : positionActuelle + 4;
         } else if (delta == 11) {
-            positionIntermediaire = (positionActuelle % 10 >= 1 && positionActuelle % 10 <= 5) ? positionActuelle + 6
-                    : positionActuelle + 5;
+            // Vérifie si la position actuelle permet un mouvement valide de -11 (vers le bas-gauche)
+            // Si le pion est dans les colonnes 1 à 5, on peut se déplacer directement à gauche
+            positionIntermediaire = (colonneActuelle >= 1 && colonneActuelle <= 5) ? positionActuelle + 6
+                    : positionActuelle + 5;  // Ajuste le calcul pour une colonne plus à droite
         } else if (delta == -9) {
-            positionIntermediaire = (positionActuelle % 10 >= 1 && positionActuelle % 10 <= 5) ? positionActuelle - 4
+            positionIntermediaire = (colonneActuelle >= 1 && colonneActuelle <= 5) ? positionActuelle - 4
                     : positionActuelle - 5;
         } else if (delta == -11) {
-            positionIntermediaire = (positionActuelle % 10 >= 1 && positionActuelle % 10 <= 5) ? positionActuelle - 5
-                    : positionActuelle - 6;
+            // Si le pion est dans les colonnes 2 à 6, il peut se déplacer à gauche
+            positionIntermediaire = (colonneActuelle >= 2 && colonneActuelle <= 6) ? positionActuelle - 5
+                    : positionActuelle - 6;  // Ajuste le calcul pour la colonne plus à gauche
         }
         return positionIntermediaire;
     }
+
 
     /**
      * Déplace un pion d'une position actuelle vers une position souhaitée.
@@ -103,9 +110,6 @@ public class JeuDames {
         damier.enleverPion(positionActuelle);
         damier.ajouterPion(positionSouhaitee, pion);
 
-        // Ajouter le mouvement à l'historique
-        historiqueDeDeplacements.add("Joueur " + (tour + 1) + ": " + positionActuelle + " -> " + positionSouhaitee);
-
         // Vérifier si le pion doit se transformer en dame
         if ((pion.getCouleur() == Pion.CouleurPion.blanc && positionSouhaitee <= 5) ||
                 (pion.getCouleur() == Pion.CouleurPion.noir && positionSouhaitee >= 46)) {
@@ -113,6 +117,7 @@ public class JeuDames {
             damier.ajouterPion(positionSouhaitee, new Dame(pion.getCouleur()));
             System.out.println("Le pion à la position " + positionSouhaitee + " a été promu en dame !");
         }
+        historiqueActions.push(new int[] {positionActuelle, positionSouhaitee});
 
         // Changer le tour du joueur
         changerTour();
@@ -148,10 +153,10 @@ public class JeuDames {
         // Déplacements valides en fonction de la couleur du pion
         if (pion.getCouleur() == Pion.CouleurPion.blanc) {
             // Pion blanc se déplace "vers le haut" (diagonales négatives)
-            return delta == -4 || delta == -5 || delta == -11;
+            return delta == -4 || delta == -5 || delta == -11 || delta == -6;
         } else if (pion.getCouleur() == Pion.CouleurPion.noir) {
             // Pion noir se déplace "vers le bas" (diagonales positives)
-            return delta == 4 || delta == 5 || delta == 11;
+            return delta == 4 || delta == 5 || delta == 11 || delta == 6;
         }
 
         return false; // Mouvement non valide
@@ -213,10 +218,7 @@ public class JeuDames {
         damier.enleverPion(positionIntermediaire);
         damier.ajouterPion(positionSouhaitee, pion);
 
-        historiqueDeDeplacements.add("Joueur " + (tour + 1) + " a capturé : " + positionActuelle + " -> " +
-                positionSouhaitee);
-
-
+        historiqueActions.push(new int[] {positionActuelle, positionSouhaitee});
 
             changerTour();
 
@@ -238,6 +240,9 @@ public class JeuDames {
      * @return true si c'est le bon joueur, false sinon.
      */
     public boolean estDeTour(Pion pion) {
+        if (pion == null) {
+            return false; // Si le pion est null, retournez false pour éviter l'exception
+        }
         return (tour == 0 && pion.getCouleur() == Pion.CouleurPion.blanc) ||
                 (tour == 1 && pion.getCouleur() == Pion.CouleurPion.noir);
     }
@@ -279,8 +284,9 @@ public class JeuDames {
      *
      * @return Liste des déplacements en tant que chaînes de caractères.
      */
-    public List<String> getHistoriqueDeDeplacements() {
-        return historiqueDeDeplacements;
+    public Stack<int[]> getHistoriqueActions()
+    {
+        return historiqueActions;
     }
 
     /**
@@ -299,5 +305,9 @@ public class JeuDames {
      */
     public Damier getDamier() {
         return damier;
+    }
+
+    public void setTour(int tour) {
+        this.tour = tour;
     }
 }
