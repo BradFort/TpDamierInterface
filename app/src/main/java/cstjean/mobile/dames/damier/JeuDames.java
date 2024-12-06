@@ -44,7 +44,7 @@ public class JeuDames {
      * @param delta            La différence de position entre la case de départ et celle d'arrivée.
      * @return La position intermédiaire du pion.
      */
-    private static int getPositionIntermediaire(int positionActuelle, int delta) {
+    public int getPositionIntermediaire(int positionActuelle, int delta) {
         int positionIntermediaire = 0;
         if (delta == 9) {
             positionIntermediaire = (positionActuelle % 10 >= 1 && positionActuelle % 10 <= 5) ? positionActuelle + 5
@@ -113,7 +113,6 @@ public class JeuDames {
             damier.ajouterPion(positionSouhaitee, new Dame(pion.getCouleur()));
             System.out.println("Le pion à la position " + positionSouhaitee + " a été promu en dame !");
         }
-
         // Changer le tour du joueur
         changerTour();
 
@@ -148,10 +147,10 @@ public class JeuDames {
         // Déplacements valides en fonction de la couleur du pion
         if (pion.getCouleur() == Pion.CouleurPion.blanc) {
             // Pion blanc se déplace "vers le haut" (diagonales négatives)
-            return delta == -4 || delta == -5;
+            return delta == -4 || delta == -5 || delta == -11;
         } else if (pion.getCouleur() == Pion.CouleurPion.noir) {
             // Pion noir se déplace "vers le bas" (diagonales positives)
-            return delta == 4 || delta == 5;
+            return delta == 4 || delta == 5 || delta == 11;
         }
 
         return false; // Mouvement non valide
@@ -187,6 +186,7 @@ public class JeuDames {
      */
     public boolean capturerPion(int positionActuelle, int positionSouhaitee) {
         Pion pion = damier.getPion(positionActuelle);
+        Log.d("PION", "Selection du pion :" + pion);
 
         if (pion == null || !estDeTour(pion)) {
             System.out.println("Capture invalide : pas de pion ou mauvais joueur.");
@@ -214,10 +214,42 @@ public class JeuDames {
 
         historiqueDeDeplacements.add("Joueur " + (tour + 1) + " a capturé : " + positionActuelle + " -> " +
                 positionSouhaitee);
-        changerTour();
+
+        // Vérifie si une capture supplémentaire est possible
+        if (peutCapturer(positionSouhaitee)) {
+            System.out.println("Capture multiple possible. Le joueur peut continuer.");
+            return true; // Capture réussie, le joueur peut continuer
+        }
+        else
+        {
+            changerTour();
+        }
 
         return true; // Capture réussie
     }
+
+    private boolean peutCapturer(int positionActuelle) {
+        int[] deltas = {9, 11, -9, -11}; // Déplacements diagonaux possibles pour une capture
+
+        for (int delta : deltas) {
+            int positionIntermediaire = getPositionIntermediaire(positionActuelle, delta);
+            int positionSouhaitee = positionActuelle + 2 * delta;
+
+            // Vérifie si la position intermédiaire et finale sont valides
+            if (positionSouhaitee >= 1 && positionSouhaitee <= 50 && positionIntermediaire != -1) {
+                Pion pionAdverse = damier.getPion(positionIntermediaire);
+                Pion destination = damier.getPion(positionSouhaitee);
+
+                // Vérifie les conditions de capture
+                if (pionAdverse != null && pionAdverse.getCouleur() != damier.getPion(positionActuelle).getCouleur() &&
+                        destination == null) {
+                    return true;
+                }
+            }
+        }
+        return false; // Aucune capture possible
+    }
+
 
     /**
      * Change le tour du joueur.
