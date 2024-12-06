@@ -113,6 +113,7 @@ public class JeuDames {
             damier.ajouterPion(positionSouhaitee, new Dame(pion.getCouleur()));
             System.out.println("Le pion à la position " + positionSouhaitee + " a été promu en dame !");
         }
+
         // Changer le tour du joueur
         changerTour();
 
@@ -215,39 +216,11 @@ public class JeuDames {
         historiqueDeDeplacements.add("Joueur " + (tour + 1) + " a capturé : " + positionActuelle + " -> " +
                 positionSouhaitee);
 
-        // Vérifie si une capture supplémentaire est possible
-        if (peutCapturer(positionSouhaitee)) {
-            System.out.println("Capture multiple possible. Le joueur peut continuer.");
-            return true; // Capture réussie, le joueur peut continuer
-        }
-        else
-        {
+
+
             changerTour();
-        }
 
         return true; // Capture réussie
-    }
-
-    private boolean peutCapturer(int positionActuelle) {
-        int[] deltas = {9, 11, -9, -11}; // Déplacements diagonaux possibles pour une capture
-
-        for (int delta : deltas) {
-            int positionIntermediaire = getPositionIntermediaire(positionActuelle, delta);
-            int positionSouhaitee = positionActuelle + 2 * delta;
-
-            // Vérifie si la position intermédiaire et finale sont valides
-            if (positionSouhaitee >= 1 && positionSouhaitee <= 50 && positionIntermediaire != -1) {
-                Pion pionAdverse = damier.getPion(positionIntermediaire);
-                Pion destination = damier.getPion(positionSouhaitee);
-
-                // Vérifie les conditions de capture
-                if (pionAdverse != null && pionAdverse.getCouleur() != damier.getPion(positionActuelle).getCouleur() &&
-                        destination == null) {
-                    return true;
-                }
-            }
-        }
-        return false; // Aucune capture possible
     }
 
 
