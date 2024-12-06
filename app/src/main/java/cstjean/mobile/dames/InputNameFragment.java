@@ -7,7 +7,7 @@ import android.view.ViewGroup;
 
 import androidx.fragment.app.Fragment;
 
-import com.example.tp2extra.R;
+import com.example.tpdamierinterface.R;
 
 public class InputNameFragment extends Fragment {
 
